@@ -7,3 +7,5 @@ public/
 .deploy*/
 package.json
 package-lock.json
+themes/
+themes/*
