@@ -3,7 +3,7 @@ title: GBDT学习总结(一)——决策树
 date: 2018-06-09 19:28:43
 tags: [GBDT]
 toc: true
-categories: [GBDT, Machine learning]
+categories: [Machine learning]
 mathjax: true
 description: GBDT学习总结，第一部分： 决策树， 内容主要引自《统计学习方法》（李航）
 ---

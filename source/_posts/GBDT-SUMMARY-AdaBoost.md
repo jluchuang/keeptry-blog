@@ -3,7 +3,7 @@ title: GBDT学习总结(三)——AdaBoost
 date: 2018-06-12 15:59:57
 tags: [GBDT, Machine learning]
 toc: true
-categories: [GBDT, Machine learning]
+categories: [Machine learning]
 mathjax: true
 description: GBDT学习总结，第三部分： AdaBoost， 内容主要引自《统计学习方法》（李航）
 ---

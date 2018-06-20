@@ -3,7 +3,7 @@ title: GBDT学习总结(二)——CART算法
 date: 2018-06-10 12:26:23
 tags: [GBDT, Machine learning]
 toc: true
-categories: [GBDT, Machine learning]
+categories: [Machine learning]
 mathjax: true
 description: GBDT学习总结，第二部分： CART， 内容主要引自《统计学习方法》（李航）
 ---

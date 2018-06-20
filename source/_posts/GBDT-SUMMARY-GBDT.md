@@ -3,7 +3,7 @@ title: GBDT学习总结(四)——提升树
 date: 2018-06-14 14:33:23
 tags: [GBDT, Machine learning]
 toc: true
-categories: [GBDT, Machine learning]
+categories: [Machine learning]
 mathjax: true
 description: GBDT学习总结，第四部分： 提升树， 内容主要引自《统计学习方法》（李航）
 ---
