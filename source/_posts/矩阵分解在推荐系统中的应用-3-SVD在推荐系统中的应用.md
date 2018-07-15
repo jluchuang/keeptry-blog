@@ -45,4 +45,59 @@ $$\min _{p_u, q_i; p_u \bot p_v; q_i \bot q_j} \sum _{r_{ui} \in R} (r_{ui} - p_
 
 梯度下降算法是一个经典的算法，用来获取方程的最小值（有时是局部最小）。如果你有了解过神经网络中使用反向传播算法（back-propagation）来计算梯度,我们接下来的算法中也将使用这种方式进行梯度计算。 这里我们并不详细的讨论SGD， 整个SGD的整体过程如下： 
 
-对于具有以下形式的最优化问题$$f(\Theta) = \sum _k f_k(\Theta)$$其中$f$是优化目标函数，$\Theta$是参数。
+对于具有以下形式的最优化问题$$f(\Theta) = \sum _k f_k(\Theta)$$其中$f$是优化目标函数，$\Theta$是参数。我们的最终目标是找到能使得$f(\Theta)$值最小的参数$\Theta$，过程如下： 
+
+- 1 随机初始化$\Theta$
+- 2 在有限次迭代次数内， 重复以下计算过程：
+  - 对于所有的$k$重复以下过程：
+    - 计算$\frac {\partial f_k} {\partial \Theta}$
+    - 更新$\Theta$: $\Theta \leftarrow \Theta - \alpha \frac {\partial f_k} {\partial \Theta}$,其中$\alpha$是学习率(learning rate)。
+
+映射到我们的场景里， 我们要获取的目标参数$\Theta$对应于所有的特征向量$p_u$和$q_i$（下面的公式中用$p_*$,$q_*$表示），我们要最小化的目标函数如下：
+$$
+f(p_*, q_*) = \sum_{r_{ui} \in R} (r_{ui} - p_u \cdot q_i) ^2 = \sum _{r_{ui} \in R} f_{ui}(p_u, q_i)
+$$
+其中$f_{ui}$被定义为$f_{ui}(p_u,q_i) = (r_{ui} - p_u \cdot q_i) ^2$
+
+到目前为止， 我们要使用SGD进行极小化计算， 我们需要计算函数$f_{ui}$对于每个$p_u$和$q_i$的偏导数。 
+
+- $f_{ui}$对于向量$p_u$的偏导数：
+$$
+\frac {\partial f_{ui}} {\partial p_u} = 
+\frac {\partial} {\partial p_u} (r_{ui} - p_u \cdot q_i) ^2 = 
+-2 q_i(r_{ui} - p_u \cdot q_i) 
+$$
+
+- $f_{ui}$对于向量$q_i$的偏导数：
+$$
+\frac {\partial f_{ui}} {\partial q_i} = 
+\frac {\partial} {\partial q_i} (r_{ui} - p_u \cdot q_i) ^2 = 
+-2 p_u(r_{ui} - p_u \cdot q_i) 
+$$
+
+### SGD算法计算过程
+
+- 1. 随机初始化向量$p_u$和$q_i$
+- 2. 再有限次迭代次数内，重复以下计算过程： 
+  - 针对所有已知的$r_{ui}$重复以下过程： 
+    - 计算$\frac {\partial f_{ui}} {\partial q_i}$ 和 $\frac {\partial f_{ui}} {\partial p_u}$
+    - 更新$p_u$和$q_i$:
+      - $p_u \leftarrow p_u + \alpha \cdot q_i(r_{ui} - p_u \cdot q_i)$
+      - $q_i \leftarrow q_i + \alpha \cdot p_u(r_{ui} - p_u \cdot q_i)$
+
+*注意上面的计算过程中我们将导数公式中的系数2，归一到学习率$\alpha$中*
+
+在上面的算法中， 所有的特征向量$p_u$和$q_i$都同时更新。Funk给出的最初算法和上面的算法略有不同：原始的算法中，每次只训练一个向量，这也使得原始的算法更有SVDesque风格。 
+
+当所有的特征向量$p_u$和$q_i$被计算出来后，我们可以按照下面公式估计所有的分值：
+$$\hat{r}_{ui} = p_u \cdot q_i$$
+$\hat{r}_{ui}$代表的是一个估计值，并非真实用户对对应item的打分。
+
+### 降维
+
+在我们对算法进行Python实现之前。 我们需要对算法的超参进行处理：具体的，算法重点的特征向量$p_u$$q_i$的长度应该是多少？ 有一点是显而易见的，$p_u$和$q_i$的长度是相同的， 不然我们没有办法根据特征向量计算内积。 
+
+回顾系列文章中的第一篇:[PCA](http://nicolas-hug.com/blog/matrix_facto_1)， 我们不用对用户或者电影的所有特征维度都进行很好的近似估计，我们可以只是用很小的特征维度对用户和电影进行估计。 
+
+读者很可能对这里特征维度的选取有质疑， SVD和PCA最神奇的地方就在于我们可以只用很小的$k$维特征向量，来对原始矩阵中的未知值进行低阶近似。具体的细节已经超出了这篇文章要讨论的范围，这里推荐阅读[ this Stanford course notes ](http://theory.stanford.edu/~tim/s15/l/l9.pdf) 中的第5节，文章的作者提出了一种恢复SVD缺失值的方法。
+
