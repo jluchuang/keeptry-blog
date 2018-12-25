@@ -671,6 +671,10 @@ public class TThreadedSelectorServer extends AbstractNonblockingServer {
 | THsHaServer | 非阻塞 | 单线程 | 单线程 | 线程池 | 半同步半异步，使用一个单独的线程来处理接收连接和网络I/O，一个独立的worker线程池来处理消息。 只要有空闲的worker线程，消息就会被立即处理，因此多条消息能被并行处理。 | 适用于网络I/O不是太繁忙、对业务逻辑调用要求较高的场景 |
 | TThreadedSelectorServer | 非阻塞 | 单线程 | 多线程 | 线程池 | 半同步半异步Server。用多个线程来处理网络I/O，用线程池来进行业务逻辑调用的处理。 当网络I/O是瓶颈的时候，TThreadedSelectorServer比THsHaServer的表现要好。 | 适用于网络I/O繁忙、对业务逻辑调用要求较高的、高并发场景 |
 
+一般情况下，生产环境中使用会在TThreadPoolServer和TThreadedSelectorServer中选一个。TThreadPoolServer优势是处理速度快、响应时间短，缺点是在高并发情况下占用系统资源较高；TThreadedSelectorServer优势是支持高并发，劣势是处理速度没有TThreadPoolServer高，但在大多数情况下能也满足业务需要。
+
+
+
 ## 参考引用
 
 - [1] [TThreadedSelectorServer.java](https://github.com/apache/thrift/blob/master/lib/java/src/org/apache/thrift/server/TThreadedSelectorServer.java)
