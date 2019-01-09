@@ -627,6 +627,223 @@ Entry对应的源码如下：
 
 ### ThreadLocal
 
+#### 使用场景
+
+首先明确一下ThreadLocal的使用场景： 
+
+> This class provides thread-local variables. These variables differ from their normal counterparts in that each thread that accesses one (via its get or set method) has its own, independently initialized copy of the variable. ThreadLocal instances are typically private static fields in classes that wish to associate state with a thread (e.g., a user ID or Transaction ID).
+Each thread holds an implicit reference to its copy of a thread-local variable as long as the thread is alive and the ThreadLocal instance is accessible; after a thread goes away, all of its copies of thread-local instances are subject to garbage collection (unless other references to these copies exist).
+
+大概翻译： 
+
+> ThreadLocal 提供了线程本地的实例。它与普通变量的区别在于，每个使用该变量的线程都会初始化一个完全独立的实例副本。ThreadLocal 变量通常被private static修饰。当一个线程结束时，它所使用的所有 ThreadLocal 相对的实例副本都可被回收。
+
+于是我们可以这样理解： **ThreadLocal适用于每个线程需要自己独立的实例且该实例需要在多个方法中被使用， 也即变量在线程间隔离活而在类间或者方法之间共享的场景。** 
+
+#### 实现原理
+
+简而言之， Java为了实现线程中变量在多方法中的共享， 每个线程都会维护一个ThreadLocalMap， 引用[Java进阶（七）正确理解Thread Local的原理与适用场景](http://www.jasongj.com/java/threadlocal/), 如下图所示 ： 
+
+![](http://www.jasongj.com/img/java/threadlocal/ThreadMap.png)
+
+进一步我们先来看Thread类的源码： 
+
+```java
+public
+class Thread implements Runnable {
+    ......
+
+    /* ThreadLocal values pertaining to this thread. This map is maintained
+     * by the ThreadLocal class. */
+    ThreadLocal.ThreadLocalMap threadLocals = null;
+
+    /*
+     * InheritableThreadLocal values pertaining to this thread. This map is
+     * maintained by the InheritableThreadLocal class.
+     */
+    ThreadLocal.ThreadLocalMap inheritableThreadLocals = null;
+    .......
+}
+```
+
+可以看到每个Thread实例中都会维护两个ThreadLocalMap成员变量， 我们这里主要考虑第一个threadLcoals。
+
+进一步我们来看ThreadLocalMap源码： 
+
+```java
+    /**
+     * ThreadLocalMap is a customized hash map suitable only for
+     * maintaining thread local values. No operations are exported
+     * outside of the ThreadLocal class. The class is package private to
+     * allow declaration of fields in class Thread.  To help deal with
+     * very large and long-lived usages, the hash table entries use
+     * WeakReferences for keys. However, since reference queues are not
+     * used, stale entries are guaranteed to be removed only when
+     * the table starts running out of space.
+     */
+    static class ThreadLocalMap {
+
+        /**
+         * The entries in this hash map extend WeakReference, using
+         * its main ref field as the key (which is always a
+         * ThreadLocal object).  Note that null keys (i.e. entry.get()
+         * == null) mean that the key is no longer referenced, so the
+         * entry can be expunged from table.  Such entries are referred to
+         * as "stale entries" in the code that follows.
+         */
+        static class Entry extends WeakReference<ThreadLocal<?>> {
+            /** The value associated with this ThreadLocal. */
+            Object value;
+
+            Entry(ThreadLocal<?> k, Object v) {
+                super(k);
+                value = v;
+            }
+        }
+        ......
+    }
+```
+
+这里为了说明原理， 我们只截取代码片段（仔细阅读ThreadLocalMap的实现，你会发现它是闭链的Map， 也就是说多个Key碰撞时并没有使用邻接拉链）， 重点来看ThreadLocalMap中Entry的实现， Entry继承了WeakReference， 该类的实例维护某个 ThreadLocal 与具体实例的映射。与 HashMap 不同的是，ThreadLocalMap 的每个 Entry 都是一个对key 的弱引用，这一点从super(k)可看出。另外，每个 Entry 都包含了一个对value的强引用。
+
+1. 线程对象消亡
+
+因此我们可以这样理解类中ThreadLocal变量的引用关系： 
+
+Thread -Strong-> ThreadLocalMap -Strong-> Entry -Weak-> ThreadLocal
+                                                -Strong-> Value 
+
+因此当Thread声明周期结束的时候， Entry也会跟着消亡， 从而 ThreadLcoal变量以及value对象都会消亡。 
+
+2. 线程使用的类对象消亡
+
+接下来我们从另一个角度来看， 如果声明ThreadLocal成员变量的类对象消亡了， 但是对应的Thread生命周期并没有结束， 也会存在内存泄漏的情况。 
+
+对于已经不再被使用且已被回收的 ThreadLocal 对象，它在每个线程内对应的实例由于被线程的 ThreadLocalMap 的 Entry 强引用，无法被回收，可能会造成内存泄漏。
+
+针对该问题，ThreadLocalMap 的 set 方法中，通过 replaceStaleEntry 方法将所有键为 null 的 Entry 的值设置为 null，从而使得该值可被回收。另外，会在 rehash 方法中通过 expungeStaleEntry 方法将键和值为 null 的 Entry 设置为 null 从而使得该 Entry 可被回收。通过这种方式，ThreadLocal 可防止内存泄漏。
+
+```java
+private void set(ThreadLocal<?> key, Object value) {
+  Entry[] tab = table;
+  int len = tab.length;
+  int i = key.threadLocalHashCode & (len-1);
+
+  for (Entry e = tab[i]; e != null; e = tab[i = nextIndex(i, len)]) {
+    ThreadLocal<?> k = e.get();
+    if (k == key) {
+      e.value = value;
+      return;
+    }
+    if (k == null) {
+      replaceStaleEntry(key, value, i);
+      return;
+    }
+  }
+  tab[i] = new Entry(key, value);
+  int sz = ++size;
+  if (!cleanSomeSlots(i, sz) && sz >= threshold)
+    rehash();
+}
+```
+
+#### 案例
+
+对于 Java Web 应用而言，Session 保存了很多信息。很多时候需要通过 Session 获取信息，有些时候又需要修改 Session 的信息。一方面，需要保证每个线程有自己单独的 Session 实例。另一方面，由于很多地方都需要操作 Session，存在多方法共享 Session 的需求。如果不使用 ThreadLocal，可以在每个线程内构建一个 Session实例，并将该实例在多个方法间传递，如下所示。
+
+```java
+public class SessionHandler {
+
+  @Data
+  public static class Session {
+    private String id;
+    private String user;
+    private String status;
+  }
+
+  public Session createSession() {
+    return new Session();
+  }
+
+  public String getUser(Session session) {
+    return session.getUser();
+  }
+
+  public String getStatus(Session session) {
+    return session.getStatus();
+  }
+
+  public void setStatus(Session session, String status) {
+    session.setStatus(status);
+  }
+
+  public static void main(String[] args) {
+    new Thread(() -> {
+      SessionHandler handler = new SessionHandler();
+      Session session = handler.createSession();
+      handler.getStatus(session);
+      handler.getUser(session);
+      handler.setStatus(session, "close");
+      handler.getStatus(session);
+    }).start();
+  }
+}
+```
+
+该方法是可以实现需求的。但是每个需要使用 Session 的地方，都需要显式传递 Session 对象，方法间耦合度较高。
+
+这里使用 ThreadLocal 重新实现该功能如下所示。
+
+```java
+public class SessionHandler {
+
+  public static ThreadLocal<Session> session = new ThreadLocal<Session>();
+
+  @Data
+  public static class Session {
+    private String id;
+    private String user;
+    private String status;
+  }
+
+  public void createSession() {
+    session.set(new Session());
+  }
+
+  public String getUser() {
+    return session.get().getUser();
+  }
+
+  public String getStatus() {
+    return session.get().getStatus();
+  }
+
+  public void setStatus(String status) {
+    session.get().setStatus(status);
+  }
+
+  public static void main(String[] args) {
+    new Thread(() -> {
+      SessionHandler handler = new SessionHandler();
+      handler.getStatus();
+      handler.getUser();
+      handler.setStatus("close");
+      handler.getStatus();
+    }).start();
+  }
+}
+```
+
+使用 ThreadLocal 改造后的代码，不再需要在各个方法间传递 Session 对象，并且也非常轻松的保证了每个线程拥有自己独立的实例。
+
+如果单看其中某一点，替代方法很多。比如可通过在线程内创建局部变量可实现每个线程有自己的实例，使用静态变量可实现变量在方法间的共享。但如果要同时满足变量在线程间的隔离与方法间的共享，ThreadLocal再合适不过。
+
+#### 小结
+
+- ThreadLocalMap 的 Entry 对 ThreadLocal 的引用为弱引用，避免了 ThreadLocal 对象无法被回收的问题。 
+- ThreadLocalMap 的 set 方法通过调用 replaceStaleEntry 方法回收键为 null 的 Entry 对象的值（即为具体实例）以及 Entry 对象本身从而防止内存泄漏。 
+- ThreadLocal 适用于变量在线程间隔离且在方法间共享的场景 
+
 ### DirectByteBuffer
 
 更多详细关于DirectByteBuffer的相关内容参见:[堆外内存之 DirectByteBuffer 详解](http://www.importnew.com/26334.html)
@@ -752,3 +969,4 @@ Cleaner继承了PhantomReference， 内部维护了一个双线链表， 当调�
 - [5] [Java引用类型原理剖析](https://github.com/farmerjohngit/myblog/issues/10)
 - [6] [gc过程中reference对象的处理](http://www.importnew.com/21628.html)
 - [7] [What's the difference between SoftReference and WeakReference in Java?](https://stackoverflow.com/questions/299659/whats-the-difference-between-softreference-and-weakreference-in-java)
+- [8] [Java进阶（七）正确理解Thread Local的原理与适用场景](http://www.jasongj.com/java/threadlocal/)
