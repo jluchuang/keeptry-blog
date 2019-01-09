@@ -39,4 +39,13 @@ description: 从一个初学者的角度来看, Mysql能够称为当前最流行
 ## 分布式事务
 - XA事务(2pc)
 
+## 参考引用
+
+- [1] [MySQL技术内幕:InnoDB存储引擎(第2版)](https://book.douban.com/subject/24708143/)
+- [2] [SQL中的where条件，在数据库中提取与应用浅析](http://hedengcheng.com/?p=577)
+- [3] [Two-phase locking](https://en.wikipedia.org/wiki/Two-phase_locking)
+- [4] [15.6.2.1 Clustered and Secondary Indexes](https://dev.mysql.com/doc/refman/8.0/en/innodb-index-types.html)
+- [5] [MySQL 加锁处理分析](http://hedengcheng.com/?p=771)
+- [6] [何登成:InnoDB 事务/锁/多版本 实现分析](http://hedengcheng.com/?p=286)
+
 
