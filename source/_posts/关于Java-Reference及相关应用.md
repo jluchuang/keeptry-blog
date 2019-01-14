@@ -23,7 +23,7 @@ Java中一共有4种引用类型(其实还有一些其他的引用类型比如Fi
 Object a = new Object(); 
 ```
 
-在展开讨论之前， 我们必须明确一点： ** 引用对象a的Reference类型决定了堆对象new Object()的GC时机。 而引用对象a自身的GC与其它引用对象是一致的（JVM会根据引用可达性来决定引用对象的GC时间）。 **
+在展开讨论之前， 我们必须明确一点： **引用对象a的Reference类型决定了堆对象new Object()的GC时机。 而引用对象a自身的GC与其它引用对象是一致的（JVM会根据引用可达性来决定引用对象的GC时间）。**
 
 本段内容主要引自参考引用[5](https://github.com/farmerjohngit/myblog/issues/10)
 
