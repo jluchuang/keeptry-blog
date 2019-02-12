@@ -2,7 +2,9 @@
 title: apache thrift 学习笔记： TNonblockingServer && THsHaServer
 date: 2018-12-17 15:00:26
 tags: [并发, thrift]
-categories: [并发]
+categories: 
+  - [并发]
+  - [thrift]
 toc: true
 description: 在上一篇对于Thrift Server端AbstractNonblockingServer类及其内部聚合的相关核心类的简要梳理之后， 这里对具体的TNonblockingServer和THsHaServer的实现模式进行梳理总结。 
 ---

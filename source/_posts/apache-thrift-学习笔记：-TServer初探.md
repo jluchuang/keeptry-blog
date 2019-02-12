@@ -2,7 +2,9 @@
 title: apache thrift 学习笔记： TServer初探
 date: 2018-12-13 14:33:16
 tags: [并发, thrift]
-categories: [并发]
+categories: 
+  - [并发]
+  - [thrift]
 toc: true
 description: 这篇文章会结合Thrift源码（Apache thrift 0.11.0）对Thrift Server端 Java 源码进行简要梳理学习。 Thrift Java Server端主要基于JDK原生的NIO实现， NIO的底层主要基于不同的操作系统调用底层的Selector/epoll/kqueue等， 相关准备知识请参见之前的总结。 这篇文章重点引用了： https://www.cnblogs.com/zaizhoumo/p/8184923.html， 感谢原创作者的整理。
 ---

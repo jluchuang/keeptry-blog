@@ -2,7 +2,9 @@
 title: 'apache thrift 学习笔记: thrift client小结'
 date: 2018-12-25 16:37:36
 tags: [并发, thrift]
-categories: [并发]
+categories: 
+  - [并发]
+  - [thrift]
 toc: true
 description: 在梳理了Thrift Server端实现逻辑的基础上， 这里总结一下Thrift Client端代码逻辑。 Thrift Client 有同步和异步两种， 两种客户端分别对应各自的使用场景。 
 ---

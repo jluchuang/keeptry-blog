@@ -2,7 +2,9 @@
 title: apache thrift 学习笔记： ThreadedSelectorServer
 date: 2018-12-17 16:59:38
 tags: [并发, thrift]
-categories: [并发]
+categories: 
+  - [并发]
+  - [thrift]
 toc: true
 description: TThreadedSelectorServer是非阻塞服务AbstractNonblockingServer的另一种实现，也是TServer的最高级形式。虽然THsHaServer对业务逻辑调用采用了线程池的方式，但是所有的数据读取和写入操作还都在单线程中完成，当需要在Client和Server之间传输大量数据时，THsHaServer就会面临性能问题。TThreadedSelectorServer将数据读取和写入操作也进行了多线程化。
 ---

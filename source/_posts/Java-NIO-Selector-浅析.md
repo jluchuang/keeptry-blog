@@ -2,7 +2,9 @@
 title: 'Java NIO: Selector 浅析'
 date: 2018-12-11 16:38:04
 tags: [并发, Java]
-categories: [并发]
+categories:
+  - [Java] 
+  - [并发]
 toc: true
 description: 在Java中，Selector这个类是select/epoll/poll/kqueue的外包类， 在不同的平台上， 底层的实现可能有所不同， 但其基本原理是一样的。 这里结合JDK源码来简要分析 Java NIO中 Selector的实现原理。 
 ---

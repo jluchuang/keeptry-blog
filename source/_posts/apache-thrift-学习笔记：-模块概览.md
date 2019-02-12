@@ -2,7 +2,9 @@
 title: apache thrift 学习笔记： 模块概览
 date: 2018-12-13 11:31:11
 tags: [并发, thrift]
-categories: [并发]
+categories: 
+  - [并发]
+  - [thrift]
 toc: true
 description: Thrift 是一个轻量的， 语言无关的软件栈， 通过实现实现相关与语言的代码自动生成机制， 来提供跨语言的序列化/RPC框架。 这里主要在概念上对Thrift的模块划分以及协议分层做简单的梳理总结。 
 ---
