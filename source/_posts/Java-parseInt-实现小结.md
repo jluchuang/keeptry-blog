@@ -6,7 +6,7 @@ tags: [Java, Algorithm]
 categories: 
   - [Java]
   - [Algorithm]
-description: 
+description: Java parseInt方法实现是比较优雅的， 充分考虑了计算过程中可能出现的边界条件， 并通过负数相减的方式有效的避免了转换过程中出现溢出的情况。
 ---
 
 按 JDK 1.8的注释描述， Java Integer.parseInt 方法主要用来实现将输入字符串参数按照给定的进制转换成10进制int型整数返回。 
